@@ -1,15 +1,15 @@
+import os
+import asyncio
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+import uvicorn
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, filters
 import firebase_admin
 from firebase_admin import credentials, db
 import random
 import string
-import asyncio
 from telegram.error import BadRequest
-import os
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
-import uvicorn
 
 # Admin check
 ADMIN_USER_ID = 5601214166
@@ -21,6 +21,7 @@ firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://crunchyroll-premium-default-rtdb.asia-southeast1.firebasedatabase.app'
 })
 
+# Channel to check
 # Channel to check
 CHANNEL_USERNAME = '@ansh_book'
 
@@ -318,12 +319,19 @@ def main():
     # Run the bot on the dynamic port
     application.run_polling(allowed_updates=Update.ALL_TYPES, port=port)
 
-    # Start the bot
-    application.run_polling()
+    await application.run_polling()
+
+# Run the FastAPI app and Telegram bot together
+async def run_all():
+    # Run FastAPI app
+    fastapi_task = asyncio.create_task(uvicorn.run(app, host="0.0.0.0", port=8000))
+
+    # Run the Telegram Bot
+    telegram_task = asyncio.create_task(run_telegram_bot())
+
+    # Wait for both tasks to finish
+    await asyncio.gather(fastapi_task, telegram_task)
 
 if __name__ == "__main__":
-    # Run FastAPI app
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-    
-    # Run the Telegram bot
-    main()
+    # Run both FastAPI and Telegram bot concurrently
+    asyncio.run(run_all())
