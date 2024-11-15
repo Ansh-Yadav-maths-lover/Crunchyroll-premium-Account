@@ -317,7 +317,11 @@ def main():
     # Run the bot on the dynamic port
     application.run_polling(allowed_updates=Update.ALL_TYPES, port=port)
 
+# Example route
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
 
