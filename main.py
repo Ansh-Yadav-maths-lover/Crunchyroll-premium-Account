@@ -298,7 +298,7 @@ async def handle_broadcast(update: Update, context: CallbackContext):
 
 # Main Function
 def main():
-    port = int(os.getenv("PORT", 8080))  # Default to 8080 if not set
+    port = int(os.getenv("PORT", 8000))  # Default to 8000 if not set
 
     application = Application.builder().token("YOUR_BOT_TOKEN").build()
 
@@ -323,5 +323,5 @@ def read_root():
     return {"Hello": "World"}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
 
