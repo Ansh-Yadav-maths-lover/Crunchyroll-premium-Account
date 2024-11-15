@@ -318,4 +318,6 @@ def main():
     application.run_polling(allowed_updates=Update.ALL_TYPES, port=port)
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
