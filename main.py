@@ -298,11 +298,9 @@ async def handle_broadcast(update: Update, context: CallbackContext):
         broadcast_enabled = False
         await update.message.reply_text("Broadcast message sent to all users. Broadcast mode is now disabled.")
 
-# Main Function
-def main():
-    port = int(os.getenv("PORT", 8000))  # Default to 8000 if not set
-
-    application = Application.builder().token("YOUR_BOT_TOKEN").build()
+# Main function to start the bot and run FastAPI concurrently
+async def main():
+    application = Application.builder().token('7791966694:AAE947BChrbxeKbCc7OHzK8CS2oVDNcwF3c').build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("redeem", redeem))
@@ -313,25 +311,14 @@ def main():
     application.add_handler(CommandHandler("balance", balance))
     application.add_handler(CommandHandler("broadcast", enable_broadcast))
 
-    # Add MessageHandler with text filter for broadcast
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_broadcast))
+    # Start the bot
+    bot_task = asyncio.create_task(application.run_polling())
 
-    # Run the bot on the dynamic port
-    application.run_polling(allowed_updates=Update.ALL_TYPES, port=port)
+    # Run FastAPI alongside the bot
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
-    await application.run_polling()
-
-# Run the FastAPI app and Telegram bot together
-async def run_all():
-    # Run FastAPI app
-    fastapi_task = asyncio.create_task(uvicorn.run(app, host="0.0.0.0", port=8000))
-
-    # Run the Telegram Bot
-    telegram_task = asyncio.create_task(run_telegram_bot())
-
-    # Wait for both tasks to finish
-    await asyncio.gather(fastapi_task, telegram_task)
+    # Wait until both bot and FastAPI are done
+    await bot_task
 
 if __name__ == "__main__":
-    # Run both FastAPI and Telegram bot concurrently
-    asyncio.run(run_all())
+    asyncio.run(main())
