@@ -6,6 +6,9 @@ import random
 import string
 import asyncio
 from telegram.error import BadRequest
+import os
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
 # Admin check
 ADMIN_USER_ID = 5601214166
@@ -20,6 +23,13 @@ firebase_admin.initialize_app(cred, {
 # Channel to check
 CHANNEL_USERNAME = '@ansh_book'
 
+# FastAPI app for health checks
+app = FastAPI()
+
+@app.get("/health")
+async def health_check():
+    return JSONResponse(content={"status": "ok"})
+
 # Admin check function
 def is_admin(user_id):
     return user_id == ADMIN_USER_ID
@@ -30,7 +40,6 @@ async def is_member_of_channel(update: Update, context: CallbackContext) -> bool
         user = update.effective_user
         chat_member = await context.bot.get_chat_member(CHANNEL_USERNAME, user.id)
 
-        # Treat the admin/owner as a member even if they are not shown as a member
         if chat_member.status in ['member', 'administrator', 'creator']:
             return True
         else:
@@ -289,8 +298,9 @@ async def handle_broadcast(update: Update, context: CallbackContext):
 
 # Main Function
 def main():
-    # Updater and Dispatcher changed in version 20.x
-    application = Application.builder().token("7791966694:AAE947BChrbxeKbCc7OHzK8CS2oVDNcwF3c").build()
+    port = int(os.getenv("PORT", 8080))  # Default to 8080 if not set
+
+    application = Application.builder().token("YOUR_BOT_TOKEN").build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("redeem", redeem))
@@ -304,7 +314,8 @@ def main():
     # Add MessageHandler with text filter for broadcast
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_broadcast))
 
-    application.run_polling()
+    # Run the bot on the dynamic port
+    application.run_polling(allowed_updates=Update.ALL_TYPES, port=port)
 
 if __name__ == "__main__":
     main()
