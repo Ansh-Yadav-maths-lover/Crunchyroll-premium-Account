@@ -9,6 +9,7 @@ from telegram.error import BadRequest
 import os
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+import uvicorn
 
 # Admin check
 ADMIN_USER_ID = 5601214166
@@ -317,12 +318,12 @@ def main():
     # Run the bot on the dynamic port
     application.run_polling(allowed_updates=Update.ALL_TYPES, port=port)
 
-# Example route
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
+    # Start the bot
+    application.run_polling()
 
 if __name__ == "__main__":
+    # Run FastAPI app
     uvicorn.run(app, host="0.0.0.0", port=8080)
-
-
+    
+    # Run the Telegram bot
+    main()
