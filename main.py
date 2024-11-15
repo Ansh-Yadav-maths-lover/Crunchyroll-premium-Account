@@ -311,14 +311,15 @@ async def main():
     application.add_handler(CommandHandler("balance", balance))
     application.add_handler(CommandHandler("broadcast", enable_broadcast))
 
-    # Start the bot
+    # Start the bot in a separate task
     bot_task = asyncio.create_task(application.run_polling())
 
-    # Run FastAPI alongside the bot
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Run FastAPI alongside the bot, ensuring it's accessible
+    try:
+        print("Starting FastAPI server on port 8000...")
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+    except Exception as e:
+        print(f"Failed to start FastAPI server: {e}")
 
     # Wait until both bot and FastAPI are done
     await bot_task
-
-if __name__ == "__main__":
-    asyncio.run(main())
