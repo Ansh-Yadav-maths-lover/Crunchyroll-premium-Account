@@ -13,12 +13,16 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 ADMIN_USER_ID = 5601214166
 broadcast_enabled = False  # Global flag for broadcast mode
 
+# Load Firebase config from environment variable
+firebase_config = os.getenv('FIREBASE_CONFIG')
+if not firebase_config:
+    raise ValueError("FIREBASE_CONFIG environment variable is not set.")
+
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("crunchyroll-premium-firebase-adminsdk-2uya1-1bc5420a5a.json")
-firebase_admin.initialize_app(cred, {
+cred = credentials.Certificate(json.loads(firebase_config))
+initialize_app(cred, {
     'databaseURL': 'https://crunchyroll-premium-default-rtdb.asia-southeast1.firebasedatabase.app/'
 })
-
 # Channel to check
 CHANNEL_USERNAME = '@ansh_book'
 
