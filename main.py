@@ -1,36 +1,26 @@
-import os
-import asyncio
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
-import uvicorn
-from telegram import Update
+from telegram import Update, Document
 from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, filters
 import firebase_admin
 from firebase_admin import credentials, db
 import random
 import string
+import asyncio
 from telegram.error import BadRequest
+import csv
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 # Admin check
 ADMIN_USER_ID = 5601214166
 broadcast_enabled = False  # Global flag for broadcast mode
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("crunchyroll-premium-firebase.json")
+cred = credentials.Certificate("crunchyroll-premium-firebase-adminsdk-2uya1-33b8087c14.json")
 firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://crunchyroll-premium-default-rtdb.asia-southeast1.firebasedatabase.app'
+    'databaseURL': 'https://crunchyroll-premium-default-rtdb.asia-southeast1.firebasedatabase.app/'
 })
 
 # Channel to check
-# Channel to check
 CHANNEL_USERNAME = '@ansh_book'
-
-# FastAPI app for health checks
-app = FastAPI()
-
-@app.get("/health")
-async def health_check():
-    return JSONResponse(content={"status": "ok"})
 
 # Admin check function
 def is_admin(user_id):
@@ -42,6 +32,7 @@ async def is_member_of_channel(update: Update, context: CallbackContext) -> bool
         user = update.effective_user
         chat_member = await context.bot.get_chat_member(CHANNEL_USERNAME, user.id)
 
+        # Treat the admin/owner as a member even if they are not shown as a member
         if chat_member.status in ['member', 'administrator', 'creator']:
             return True
         else:
@@ -67,16 +58,16 @@ async def start(update: Update, context: CallbackContext):
 
 Here's how to get started with Crunchyroll Premium Bot:
 
-1️⃣ **Redeem a Code**: 
+1️⃣ Redeem a Code: 
     - Use /redeem <code> to redeem points and get a premium Crunchyroll account.
 
-2️⃣ **Check Your Balance**: 
+2️⃣ Check Your Balance: 
     - Use /balance to check how many points you have.
 
-3️⃣ **Get an Account**: 
+3️⃣ Get an Account: 
     - Use /get to redeem an account when you have enough points (Each account costs 10 points).
 
-4️⃣ **Stay Updated**: 
+4️⃣ Stay Updated: 
     - Join our updates channel for the latest news and offers: @ansh_book ✅
 
             Enjoy using the bot and happy redeeming! 😄
@@ -114,9 +105,17 @@ async def redeem(update: Update, context: CallbackContext):
 
         user_ref = db.reference(f'users/{update.effective_user.id}')
         user_data = user_ref.get()
-        user_ref.update({'points': user_data['points'] + points})
 
-        await update.message.reply_text(f"Code redeemed! You got {points} points.")
+        # Update user's points balance
+        new_balance = user_data['points'] + points
+        user_ref.update({'points': new_balance})
+
+        # Send interactive message
+        await update.message.reply_text(
+            f"Congratulations 🎉 {update.effective_user.first_name}, {points} Points have been added to your balance ✅\n"
+            f"Your new balance is {new_balance} points."
+        )
+
 
 # Command: Get Account
 async def get_account(update: Update, context: CallbackContext):
@@ -146,8 +145,10 @@ async def get_account(update: Update, context: CallbackContext):
         # Countdown before showing account credentials
         await countdown(update)
 
-        # Send account details after countdown
+        # Get email and password
         email, password = account_data['credentials'].split(":")
+
+        # Message without code blocks
         message = f"""
 Congratulations 🎉 you have redeemed your account.
 
@@ -166,6 +167,7 @@ async def countdown(update: Update):
         await countdown_message.edit_text(f"Processing in... {i}...")  # Update the same message
     await asyncio.sleep(1)  # One last second before displaying the account
     await countdown_message.edit_text("Processing completed! 🎉")  # Final message after countdown
+
 
 # Command: Add Code (Admin only)
 async def add_code(update: Update, context: CallbackContext):
@@ -200,17 +202,66 @@ async def add_bulk_accounts(update: Update, context: CallbackContext):
         await update.message.reply_text("Usage: /addbulkaccounts <username1>:<password1> <username2>:<password2> ...")
         return
 
+    added_accounts = []
+    existing_accounts = []
+    invalid_entries = []
+
     for account in accounts_data:
-        username, password = account.split(':')
-        account_ref = db.reference(f'accounts/{username}')
+        # Ensure the input is in the correct format
+        if ':' not in account:
+            invalid_entries.append(account)
+            continue
+
+        username, password = account.split(':', 1)  # Use maxsplit=1 to handle : in passwords
+
+        # Sanitize the username to make it Firebase-safe
+        sanitized_username = username.replace('.', ',')
+
+        account_ref = db.reference(f'accounts/{sanitized_username}')
 
         # Check if the account already exists
         if account_ref.get():
-            await update.message.reply_text(f"Account {username} already exists!")
+            existing_accounts.append(username)
         else:
             # Add new account to Firebase
             account_ref.set({'credentials': f'{username}:{password}'})
-            await update.message.reply_text(f"Account {username} added successfully!")
+            added_accounts.append(username)
+
+    # Prepare a consolidated response message
+    response_message = "Bulk Account Addition Report:\n\n"
+
+    if added_accounts:
+        response_message += f"✅ Successfully added accounts: {', '.join(added_accounts)}\n"
+    if existing_accounts:
+        response_message += f"⚠ Already existing accounts: {', '.join(existing_accounts)}\n"
+    if invalid_entries:
+        response_message += f"❌ Invalid entries: {', '.join(invalid_entries)}\n"
+
+    await update.message.reply_text(response_message)
+
+# Command: Admin Status (Admin only)
+async def admin_status(update: Update, context: CallbackContext):
+    if not is_admin(update.effective_user.id):
+        await update.message.reply_text("You are not authorized to view the admin status.")
+        return
+
+    # Get the count of available accounts from Firebase
+    accounts_ref = db.reference('accounts')
+    accounts = accounts_ref.get()
+    num_accounts = len(accounts) if accounts else 0
+
+    # Get the count of available codes from Firebase
+    codes_ref = db.reference('codes')
+    codes = codes_ref.get()
+    num_codes = len(codes) if codes else 0
+
+    status_message = f"""
+Admin Status:
+Available Accounts: {num_accounts}
+Available Codes: {num_codes}
+    """
+
+    await update.message.reply_text(status_message)
 
 # Command: Generate Random Codes (Admin only)
 async def generate_codes(update: Update, context: CallbackContext):
@@ -298,9 +349,10 @@ async def handle_broadcast(update: Update, context: CallbackContext):
         broadcast_enabled = False
         await update.message.reply_text("Broadcast message sent to all users. Broadcast mode is now disabled.")
 
-# Main function to start the bot and run FastAPI concurrently
-async def main():
-    application = Application.builder().token('7791966694:AAE947BChrbxeKbCc7OHzK8CS2oVDNcwF3c').build()
+# Main Function
+def main():
+    # Updater and Dispatcher changed in version 20.x
+    application = Application.builder().token("7791966694:AAE947BChrbxeKbCc7OHzK8CS2oVDNcwF3c").build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("redeem", redeem))
@@ -310,16 +362,12 @@ async def main():
     application.add_handler(CommandHandler("generatecodes", generate_codes))
     application.add_handler(CommandHandler("balance", balance))
     application.add_handler(CommandHandler("broadcast", enable_broadcast))
+    application.add_handler(CommandHandler("adminstatus", admin_status))
 
-    # Start the bot in a separate task
-    bot_task = asyncio.create_task(application.run_polling())
+    # Add MessageHandler with text filter for broadcast
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_broadcast))
 
-    # Run FastAPI alongside the bot, ensuring it's accessible
-    try:
-        print("Starting FastAPI server on port 8000...")
-        uvicorn.run(app, host="0.0.0.0", port=8000)
-    except Exception as e:
-        print(f"Failed to start FastAPI server: {e}")
+    application.run_polling()
 
-    # Wait until both bot and FastAPI are done
-    await bot_task
+if _name_ == "_main_":
+    main()
