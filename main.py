@@ -10,6 +10,8 @@ import csv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import os
 from flask import Flask
+from telegram import Bot
+
 
 app = Flask(__name__)
 @app.route('/')
@@ -370,11 +372,12 @@ def main():
     application.add_handler(CommandHandler("broadcast", enable_broadcast))
     application.add_handler(CommandHandler("adminstatus", admin_status))
 
-    # Add MessageHandler with text filter for broadcast
+    # Add message handler for text that is not a command
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_broadcast))
 
+    # Start polling to receive messages from Telegram
     application.run_polling()
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 8000))  # Get the port from environment or default to 8000
-    app.run(host='0.0.0.0', port=port)
+    # You do not need Flask if using polling
+    main()
