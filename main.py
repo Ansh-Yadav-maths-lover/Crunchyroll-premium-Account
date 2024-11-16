@@ -375,7 +375,7 @@ def main():
     application = Application.builder().token("7791966694:AAE947BChrbxeKbCc7OHzK8CS2oVDNcwF3c").build()
 
 # Initialize Dispatcher for handling commands
-dispatcher = Dispatcher(bot, update_queue=None)
+#dispatcher = Dispatcher(bot, update_queue=None)
 
 # Add your command handlers
 dispatcher.add_handler(CommandHandler("start", start))
