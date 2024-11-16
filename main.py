@@ -14,7 +14,7 @@ ADMIN_USER_ID = 5601214166
 broadcast_enabled = False  # Global flag for broadcast mode
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("crunchyroll-premium-firebase-adminsdk-2uya1-33b8087c14.json")
+cred = credentials.Certificate("crunchyroll-premium-firebase-adminsdk-2uya1-1bc5420a5a.json")
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://crunchyroll-premium-default-rtdb.asia-southeast1.firebasedatabase.app/'
 })
