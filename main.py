@@ -379,5 +379,6 @@ def main():
     application.run_polling()
 
 if __name__ == "__main__":
-    # You do not need Flask if using polling
-    main()
+    from telegram.ext import Application
+    application = Application.builder().token("YOUR_BOT_TOKEN").build()
+    application.run_polling()
