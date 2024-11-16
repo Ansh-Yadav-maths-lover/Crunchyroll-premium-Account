@@ -8,7 +8,13 @@ import asyncio
 from telegram.error import BadRequest
 import csv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+import os
+from flask import Flask
 
+app = Flask(__name__)
+@app.route('/')
+def home():
+    return "Bot is running!"
 # Admin check
 ADMIN_USER_ID = 5601214166
 broadcast_enabled = False  # Global flag for broadcast mode
@@ -370,4 +376,5 @@ def main():
     application.run_polling()
 
 if __name__ == "__main__":
-    main()
+    port = int(os.environ.get('PORT', 8000))  # Get the port from environment or default to 8000
+    app.run(host='0.0.0.0', port=port)
