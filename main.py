@@ -8,25 +8,17 @@ import asyncio
 from telegram.error import BadRequest
 import csv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-import os
-import json  # Ensure json is also imported
 
 # Admin check
 ADMIN_USER_ID = 5601214166
 broadcast_enabled = False  # Global flag for broadcast mode
 
-# Load Firebase config from environment variable
-# Debugging: print out the FIREBASE_CONFIG environment variable
-firebase_config = os.getenv('FIREBASE_CONFIG')
-if firebase_config is None:
-    print("FIREBASE_CONFIG environment variable is not set.")
-else:
-    print("FIREBASE_CONFIG is set successfully.")
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate(json.loads(firebase_config))
-initialize_app(cred, {
+cred = credentials.Certificate("crunchyroll-premium.json")
+firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://crunchyroll-premium-default-rtdb.asia-southeast1.firebasedatabase.app/'
 })
+
 # Channel to check
 CHANNEL_USERNAME = '@ansh_book'
 
@@ -377,5 +369,5 @@ def main():
 
     application.run_polling()
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     main()
