@@ -16,10 +16,12 @@ ADMIN_USER_ID = 5601214166
 broadcast_enabled = False  # Global flag for broadcast mode
 
 # Load Firebase config from environment variable
+# Debugging: print out the FIREBASE_CONFIG environment variable
 firebase_config = os.getenv('FIREBASE_CONFIG')
-if not firebase_config:
-    raise ValueError("FIREBASE_CONFIG environment variable is not set.")
-
+if firebase_config is None:
+    print("FIREBASE_CONFIG environment variable is not set.")
+else:
+    print("FIREBASE_CONFIG is set successfully.")
 # Initialize Firebase Admin SDK
 cred = credentials.Certificate(json.loads(firebase_config))
 initialize_app(cred, {
