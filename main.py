@@ -380,5 +380,5 @@ def main():
 
 if __name__ == "__main__":
     from telegram.ext import Application
-    application = Application.builder().token("YOUR_BOT_TOKEN").build()
+    application = Application.builder().token("7791966694:AAE947BChrbxeKbCc7OHzK8CS2oVDNcwF3c").build()
     application.run_polling()
