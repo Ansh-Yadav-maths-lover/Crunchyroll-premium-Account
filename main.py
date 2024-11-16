@@ -1,3 +1,4 @@
+import telegram
 from telegram import Update, Document
 from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, filters
 import firebase_admin
@@ -9,14 +10,25 @@ from telegram.error import BadRequest
 import csv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import os
-from flask import Flask
+from flask import Flask, request
 from telegram import Bot
 
-
 app = Flask(__name__)
-@app.route('/')
-def home():
-    return "Bot is running!"
+
+# Initialize your bot with your token
+bot = telegram.Bot(token="7791966694:AAE947BChrbxeKbCc7OHzK8CS2oVDNcwF3c")
+
+# Setup the webhook URL (this should be a secure URL, ideally HTTPS)
+WEBHOOK_URL = 'https://southern-elysee-anshyadav-dc87d6fc.koyeb.app/'
+
+# Create a function to process incoming updates
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    if request.method == 'POST':
+        json_str = request.get_data(as_text=True)
+        update = Update.de_json(json_str, bot)
+        dispatcher.process_update(update)
+        return 'OK', 200
 # Admin check
 ADMIN_USER_ID = 5601214166
 broadcast_enabled = False  # Global flag for broadcast mode
@@ -362,23 +374,20 @@ def main():
     # Updater and Dispatcher changed in version 20.x
     application = Application.builder().token("7791966694:AAE947BChrbxeKbCc7OHzK8CS2oVDNcwF3c").build()
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("redeem", redeem))
-    application.add_handler(CommandHandler("get", get_account))
-    application.add_handler(CommandHandler("addcode", add_code))
-    application.add_handler(CommandHandler("addbulkaccounts", add_bulk_accounts))
-    application.add_handler(CommandHandler("generatecodes", generate_codes))
-    application.add_handler(CommandHandler("balance", balance))
-    application.add_handler(CommandHandler("broadcast", enable_broadcast))
-    application.add_handler(CommandHandler("adminstatus", admin_status))
+# Initialize Dispatcher for handling commands
+dispatcher = Dispatcher(bot, update_queue=None)
 
-    # Add message handler for text that is not a command
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_broadcast))
-
-    # Start polling to receive messages from Telegram
-    application.run_polling()
+# Add your command handlers
+dispatcher.add_handler(CommandHandler("start", start))
+dispatcher.add_handler(CommandHandler("redeem", redeem))
+dispatcher.add_handler(CommandHandler("get", get_account))
+dispatcher.add_handler(CommandHandler("addcode", add_code))
+dispatcher.add_handler(CommandHandler("addbulkaccounts", add_bulk_accounts))
+dispatcher.add_handler(CommandHandler("generatecodes", generate_codes))
+dispatcher.add_handler(CommandHandler("balance", balance))
+dispatcher.add_handler(CommandHandler("broadcast", enable_broadcast))
+dispatcher.add_handler(CommandHandler("adminstatus", admin_status))
+dispatcher.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_broadcast))
 
 if __name__ == "__main__":
-    from telegram.ext import Application
-    application = Application.builder().token("7791966694:AAE947BChrbxeKbCc7OHzK8CS2oVDNcwF3c").build()
-    application.run_polling()
+    app.run(debug=True)
