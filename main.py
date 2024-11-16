@@ -370,24 +370,67 @@ async def handle_broadcast(update: Update, context: CallbackContext):
         await update.message.reply_text("Broadcast message sent to all users. Broadcast mode is now disabled.")
 
 # Main Function
+from telegram import Update
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
+
+# Define your command callback functions
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Welcome to the bot!")
+
+async def redeem(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Redeem command invoked.")
+
+async def get_account(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Get account command invoked.")
+
+async def add_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Add code command invoked.")
+
+async def add_bulk_accounts(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Add bulk accounts command invoked.")
+
+async def generate_codes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Generate codes command invoked.")
+
+async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Balance command invoked.")
+
+async def enable_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Enable broadcast command invoked.")
+
+async def admin_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Admin status command invoked.")
+
+async def handle_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Broadcast message received.")
+
+# Main function to run the bot
 def main():
-    # Updater and Dispatcher changed in version 20.x
-    application = Application.builder().token("7791966694:AAE947BChrbxeKbCc7OHzK8CS2oVDNcwF3c").build()
+    # Initialize the Application
+    application = ApplicationBuilder().token("7791966694:AAE947BChrbxeKbCc7OHzK8CS2oVDNcwF3c").build()
 
-# Initialize Dispatcher for handling commands
-#dispatcher = Dispatcher(bot, update_queue=None)
+    # Add command handlers to the application
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("redeem", redeem))
+    application.add_handler(CommandHandler("get", get_account))
+    application.add_handler(CommandHandler("addcode", add_code))
+    application.add_handler(CommandHandler("addbulkaccounts", add_bulk_accounts))
+    application.add_handler(CommandHandler("generatecodes", generate_codes))
+    application.add_handler(CommandHandler("balance", balance))
+    application.add_handler(CommandHandler("broadcast", enable_broadcast))
+    application.add_handler(CommandHandler("adminstatus", admin_status))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_broadcast))
 
-# Add your command handlers
-dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(CommandHandler("redeem", redeem))
-dispatcher.add_handler(CommandHandler("get", get_account))
-dispatcher.add_handler(CommandHandler("addcode", add_code))
-dispatcher.add_handler(CommandHandler("addbulkaccounts", add_bulk_accounts))
-dispatcher.add_handler(CommandHandler("generatecodes", generate_codes))
-dispatcher.add_handler(CommandHandler("balance", balance))
-dispatcher.add_handler(CommandHandler("broadcast", enable_broadcast))
-dispatcher.add_handler(CommandHandler("adminstatus", admin_status))
-dispatcher.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_broadcast))
+    # Start the bot with polling
+    application.run_polling()
 
+# Entry point
 if __name__ == "__main__":
-    app.run(debug=True)
+    main()
+
