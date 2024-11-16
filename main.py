@@ -8,6 +8,8 @@ import asyncio
 from telegram.error import BadRequest
 import csv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+import os
+import json  # Ensure json is also imported
 
 # Admin check
 ADMIN_USER_ID = 5601214166
